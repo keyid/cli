@@ -23,7 +23,7 @@ var BashCompletionFlag Flag = BoolFlag{
 // VersionFlag prints the version for the application
 var VersionFlag Flag = BoolFlag{
 	Name:  "version, v",
-	Usage: "print the version",
+	Usage: "Print version",
 }
 
 // HelpFlag prints the help for all commands and subcommands
@@ -31,7 +31,7 @@ var VersionFlag Flag = BoolFlag{
 // unless HideHelp is set to true)
 var HelpFlag Flag = BoolFlag{
 	Name:  "help, h",
-	Usage: "show help",
+	Usage: "Print help text",
 }
 
 // FlagStringer converts a flag definition to a string. This is used by help
