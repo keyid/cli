@@ -12,17 +12,24 @@ import (
 // AppHelpTemplate is the text template for the Default help topic.
 // cli.go uses text/template to render templates. You can
 // render custom help text by setting this variable.
-var AppHelpTemplate = "\\e[34m" + `{{.Name}} v{{.Version}}{{if .Description}}
-{{.Description}}{{end}}
+var titleColor = "\x1b[1;35m"   // Light Purple
+var commandColor = "\x1b[34;1m" // Blue
+var versionColor = "\x1b[37;0m" // Light Gray
+var headerColor = "\x1b[0;1m"   // White
+var resetColor = "\x1b[0;m"     // Reset
 
-Usage:
-   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
+var AppHelpTemplate = fmt.Sprintf(titleColor) + `{{.Name}} ` + fmt.Sprintf(versionColor) + `v{{.Version}}
+` + fmt.Sprintf(headerColor) + `============` + fmt.Sprintf(resetColor) + `{{if .Description}}
+{{.Description}}
+{{end}}
+` + fmt.Sprintf(headerColor) + `Usage:` + fmt.Sprintf(resetColor) + `
+   {{if .UsageText}}{{.UsageText}}{{else}}` + fmt.Sprintf(commandColor) + `{{.HelpName}} ` + fmt.Sprintf(resetColor) + `{{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
 
-Global Options:
+` + fmt.Sprintf(headerColor) + `Global Options:` + fmt.Sprintf(resetColor) + `
    {{range $index, $option := .VisibleFlags}}{{if $index}}
    {{end}}{{$option}}{{end}}
 
-Commands:{{range .VisibleCategories}}{{if .Name}}
+` + fmt.Sprintf(headerColor) + `Commands:` + fmt.Sprintf(resetColor) + `{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
      {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}
 `
@@ -30,18 +37,18 @@ Commands:{{range .VisibleCategories}}{{if .Name}}
 // CommandHelpTemplate is the text template for the command help topic.
 // cli.go uses text/template to render templates. You can
 // render custom help text by setting this variable.
-var CommandHelpTemplate = `{{.HelpName}} - {{.Usage}}
+var CommandHelpTemplate = fmt.Sprintf(commandColor) + `{{.HelpName}}` + fmt.Sprintf(resetColor) + ` - {{.Usage}}
 
-Usage:
+` + fmt.Sprintf(headerColor) + `Usage:` + fmt.Sprintf(resetColor) + `
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}}{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}{{if .Category}}
 
-Category:
+` + fmt.Sprintf(headerColor) + `Category:` + fmt.Sprintf(resetColor) + `
    {{.Category}}{{end}}{{if .Description}}
 
-Description:
+` + fmt.Sprintf(headerColor) + `Description:` + fmt.Sprintf(resetColor) + `
    {{.Description}}{{end}}{{if .VisibleFlags}}
 
-Options:
+` + fmt.Sprintf(headerColor) + `Options:` + fmt.Sprintf(resetColor) + `
    {{range .VisibleFlags}}{{.}}
    {{end}}{{end}}
 `
@@ -50,16 +57,16 @@ Options:
 // cli.go uses text/template to render templates. You can
 // render custom help text by setting this variable.
 var SubcommandHelpTemplate = `Name:
-   {{.HelpName}} - {{if .Description}}{{.Description}}{{else}}{{.Usage}}{{end}}
+   ` + fmt.Sprintf(commandColor) + `{{.HelpName}}` + fmt.Sprintf(resetColor) + ` - {{if .Description}}{{.Description}}{{else}}{{.Usage}}{{end}}
 
-Usage:
+` + fmt.Sprintf(headerColor) + `Usage:` + fmt.Sprintf(resetColor) + `
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} command{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
 
-Commands:{{range .VisibleCategories}}{{if .Name}}
+` + fmt.Sprintf(headerColor) + `Commands:` + fmt.Sprintf(resetColor) + `{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
      {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}
 {{end}}{{if .VisibleFlags}}
-Options:
+` + fmt.Sprintf(headerColor) + `Options:` + fmt.Sprintf(resetColor) + `
    {{range .VisibleFlags}}{{.}}
    {{end}}{{end}}
 `
@@ -98,17 +105,10 @@ var helpSubcommand = Command{
 // Prints help for the App or Command
 type helpPrinter func(w io.Writer, templ string, data interface{})
 
-// Prints help for the App or Command with custom template function.
-type helpPrinterCustom func(w io.Writer, templ string, data interface{}, customFunc map[string]interface{})
-
 // HelpPrinter is a function that writes the help output. If not set a default
 // is used. The function signature is:
 // func(w io.Writer, templ string, data interface{})
 var HelpPrinter helpPrinter = printHelp
-
-// HelpPrinterCustom is same as HelpPrinter but
-// takes a custom function for template function map.
-var HelpPrinterCustom helpPrinterCustom = printHelpCustom
 
 // VersionPrinter prints the version for the App
 var VersionPrinter = printVersion
@@ -120,21 +120,8 @@ func ShowAppHelpAndExit(c *Context, exitCode int) {
 }
 
 // ShowAppHelp is an action that displays the help.
-func ShowAppHelp(c *Context) (err error) {
-	if c.App.CustomAppHelpTemplate == "" {
-		HelpPrinter(c.App.Writer, AppHelpTemplate, c.App)
-		return
-	}
-	customAppData := func() map[string]interface{} {
-		if c.App.ExtraInfo == nil {
-			return nil
-		}
-		return map[string]interface{}{
-			"ExtraInfo": c.App.ExtraInfo,
-		}
-	}
-	HelpPrinterCustom(c.App.Writer, c.App.CustomAppHelpTemplate, c.App, customAppData())
-	return nil
+func ShowAppHelp(c *Context) {
+	HelpPrinter(c.App.Writer, AppHelpTemplate, c.App)
 }
 
 // DefaultAppComplete prints the list of subcommands as the default app completion method
@@ -165,11 +152,7 @@ func ShowCommandHelp(ctx *Context, command string) error {
 
 	for _, c := range ctx.App.Commands {
 		if c.HasName(command) {
-			if c.CustomHelpTemplate != "" {
-				HelpPrinterCustom(ctx.App.Writer, c.CustomHelpTemplate, c, nil)
-			} else {
-				HelpPrinter(ctx.App.Writer, CommandHelpTemplate, c)
-			}
+			HelpPrinter(ctx.App.Writer, CommandHelpTemplate, c)
 			return nil
 		}
 	}
@@ -212,32 +195,17 @@ func ShowCommandCompletions(ctx *Context, command string) {
 	}
 }
 
-func printHelpCustom(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
+func printHelp(out io.Writer, templ string, data interface{}) {
 	funcMap := template.FuncMap{
 		"join": strings.Join,
 	}
-	if customFunc != nil {
-		for key, value := range customFunc {
-			funcMap[key] = value
-		}
-	}
-
 	w := tabwriter.NewWriter(out, 1, 8, 2, ' ', 0)
 	t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
 	err := t.Execute(w, data)
 	if err != nil {
-		// If the writer is closed, t.Execute will fail, and there's nothing
-		// we can do to recover.
-		if os.Getenv("CLI_TEMPLATE_ERROR_DEBUG") != "" {
-			fmt.Fprintf(ErrWriter, "CLI TEMPLATE ERROR: %#v\n", err)
-		}
 		return
 	}
 	w.Flush()
-}
-
-func printHelp(out io.Writer, templ string, data interface{}) {
-	printHelpCustom(out, templ, data, nil)
 }
 
 func checkVersion(c *Context) bool {
