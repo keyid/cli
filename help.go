@@ -12,7 +12,7 @@ import (
 // AppHelpTemplate is the text template for the Default help topic.
 // cli.go uses text/template to render templates. You can
 // render custom help text by setting this variable.
-var AppHelpTemplate = `{{.Name}} v{{.Version}}{{if .Description}}
+var AppHelpTemplate = "\\e[34m" + `{{.Name}} v{{.Version}}{{if .Description}}
 {{.Description}}{{end}}
 
 Usage:
