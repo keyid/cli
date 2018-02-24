@@ -197,6 +197,22 @@ func (a Args) First() string {
 	return a.Get(0)
 }
 
+func (a Args) Second() string {
+	return a.Get(1)
+}
+
+func (a Args) Third() string {
+	return a.Get(2)
+}
+
+func (a Args) Fourth() string {
+	return a.Get(3)
+}
+
+func (a Args) Last() string {
+	return a.Get(len(a)-1)
+}
+
 // Tail returns the rest of the arguments (not the first one)
 // or else an empty string slice
 func (a Args) Tail() []string {
