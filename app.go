@@ -11,15 +11,7 @@ import (
 )
 
 var (
-	changeLogURL                    = "CHANGELOG.md"
-	appActionDeprecationURL         = fmt.Sprintf("%s#deprecated-cli-app-action-signature", changeLogURL)
-	runAndExitOnErrorDeprecationURL = fmt.Sprintf("%s#deprecated-cli-app-runandexitonerror", changeLogURL)
-
-	contactSysadmin = "This is an error in the application.  Please contact the distributor of this application if this is not you."
-
-	errInvalidActionType = NewExitError("ERROR invalid Action type. "+
-		fmt.Sprintf("Must be `func(*Context`)` or `func(*Context) error).  %s", contactSysadmin)+
-		fmt.Sprintf("See %s", appActionDeprecationURL), 2)
+	errInvalidActionType = NewExitError("ERROR invalid Action type. Must be `func(*Context`)` or `func(*Context) error).", 2)
 )
 
 // App is the main structure of a cli application. It is recommended that
@@ -71,14 +63,6 @@ type App struct {
 	OnUsageError OnUsageErrorFunc
 	// Compilation date
 	Compiled time.Time
-	// List of all authors who contributed
-	Authors []Author
-	// Copyright of the binary if any
-	Copyright string
-	// Name of Author (Note: Use App.Authors, this is deprecated)
-	Author string
-	// Email of Author (Note: Use App.Authors, this is deprecated)
-	Email string
 	// Writer writer to write output to
 	Writer io.Writer
 	// ErrWriter writes error output
@@ -133,10 +117,6 @@ func (a *App) Setup() {
 	}
 
 	a.didSetup = true
-
-	if a.Author != "" || a.Email != "" {
-		a.Authors = append(a.Authors, Author{Name: a.Author, Email: a.Email})
-	}
 
 	newCmds := []Command{}
 	for _, c := range a.Commands {
@@ -475,26 +455,10 @@ func (a *App) handleExitCoder(context *Context, err error) {
 	}
 }
 
-// Author represents someone who has contributed to a cli project.
-type Author struct {
-	Name  string // The Authors name
-	Email string // The Authors email
-}
-
-// String makes Author comply to the Stringer interface, to allow an easy print in the templating process
-func (a Author) String() string {
-	e := ""
-	if a.Email != "" {
-		e = " <" + a.Email + ">"
-	}
-
-	return fmt.Sprintf("%v%v", a.Name, e)
-}
-
 // HandleAction attempts to figure out which Action signature was used.  If
 // it's an ActionFunc or a func with the legacy signature for Action, the func
 // is run!
-func HandleAction(action interface{}, context *Context) (err error) {
+func HandleAction(action interface{}, context *Context) error {
 	if a, ok := action.(ActionFunc); ok {
 		return a(context)
 	} else if a, ok := action.(func(*Context) error); ok {
